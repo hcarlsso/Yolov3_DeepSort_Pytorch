@@ -1,9 +1,9 @@
 import argparse
 from sys import platform
 
-from yolov3.models import *  # set ONNX_EXPORT in models.py
-from yolov3.utils.datasets import *
-from yolov3.utils.utils import *
+from yolov3.models import attempt_download, ONNX_EXPORT, Darknet, torch, torch_utils, os, shutil, load_classes, random, time, Path, scale_coords, cv2  # set ONNX_EXPORT in models.py
+from yolov3.utils.datasets import LoadStreams, LoadImages
+from yolov3.utils.utils import non_max_suppression
 from deep_sort import DeepSort
 
 deepsort = DeepSort("deep_sort/deep/checkpoint/ckpt.t7")
@@ -35,7 +35,7 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         y1 += offset[1]
         y2 += offset[1]
         # box text and bar
-        id = int(identities[i]) if identities is not None else 0    
+        id = int(identities[i]) if identities is not None else 0
         color = compute_color_for_labels(id)
         label = '{}{:d}'.format("", id)
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2 , 2)[0]
@@ -46,7 +46,7 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
 
 
 
-def detect(save_img=True):
+def detect(opt):
     img_size = (320, 192) if ONNX_EXPORT else opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
     out, source, weights, half, view_img, save_txt = opt.output, opt.source, opt.weights, opt.half, opt.view_img, opt.save_txt
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
@@ -78,7 +78,7 @@ def detect(save_img=True):
     # Set Dataloader
     vid_path, vid_writer = None, None
     if webcam:
-        save_img = False
+        # save_img = False
         view_img = True
         torch.backends.cudnn.benchmark = True  # set True to speed up constant image size inference
         dataset = LoadStreams(source, img_size=img_size, half=half)
@@ -92,7 +92,9 @@ def detect(save_img=True):
 
     # Run inference
     t0 = time.time()
+    j = 0
     for path, img, im0s, vid_cap in dataset:
+        j += 1
         t = time.time()
 
         # Get detections
@@ -105,7 +107,13 @@ def detect(save_img=True):
             pred = pred.float()
 
         # Apply NMS
-        pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
+        pred = non_max_suppression(
+            pred,
+            opt.conf_thres,
+            opt.iou_thres,
+            classes=opt.classes,
+            agnostic=opt.agnostic_nms
+        )
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
@@ -166,7 +174,7 @@ def detect(save_img=True):
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'images':
-                    cv2.imwrite(save_path, im0)
+                    cv2.imwrite(save_path + '%d.jpg' % j, im0)
                 else:
                     if vid_path != save_path:  # new video
                         vid_path = save_path
@@ -202,10 +210,11 @@ if __name__ == '__main__':
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1) or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    parser.add_argument('--save-img', action='store_true', help='save img results')
     parser.add_argument('--classes', nargs='+', type=int, default=[0], help='filter by class')
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     opt = parser.parse_args()
     print(opt)
 
     with torch.no_grad():
-        detect()
+        detect(opt)

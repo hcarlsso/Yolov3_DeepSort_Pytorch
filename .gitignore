@@ -1,2 +1,4 @@
 # output folder
 output/
+.venv/
+__pycache__/
