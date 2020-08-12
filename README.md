@@ -24,7 +24,7 @@ Python 3.7 or later with all of the `pip install -U -r requirements.txt` package
 - `opencv-python`
 - `Pillow`
 
-All dependencies are included in the associated docker images. Docker requirements are: 
+All dependencies are included in the associated docker images. Docker requirements are:
 - `nvidia-docker`
 - Nvidia Driver Version >= 440.44
 
@@ -50,3 +50,12 @@ python3 track.py --source ...
 
 For more detailed information about the algorithms and their corresponding lisences used in this project access their official github implementations.
 
+## First time
+
+``` bash
+source <anaconda3 path>/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U -r requirements.txt
+python3 track.py --source input/home_short.mp4 --save-img
+```
