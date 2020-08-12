@@ -102,6 +102,8 @@ def detect(opt):
     # Run inference
     t0 = time.time()
     j = 0
+    # img: Resized image
+    # im0s: Original image
     for path, img, im0s, vid_cap in dataset:
         j += 1
         t = time.time()
@@ -110,12 +112,13 @@ def detect(opt):
         img = torch.from_numpy(img).to(device)
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
-        pred = model(img)[0]
+        pred = model(img)[0] # inference output [0], training output [1]
 
         if opt.half:
             pred = pred.float()
 
-        # Apply NMS
+        # Apply NMS. Probably preserves type of pred.
+        # Looks like  it yields  the same amount of predictions.
         pred = non_max_suppression(
             pred,
             opt.conf_thres,
@@ -146,6 +149,7 @@ def detect(opt):
                 confs = []
 
                 # Write results
+                # (x1, y1, x2, y2, object_conf, conf, class)
                 for *xyxy, conf, cls in det:
                     img_h, img_w, _ = im0.shape  # get image shape
                     bbox_left = min([xyxy[0].item(), xyxy[2].item()])
@@ -163,7 +167,11 @@ def detect(opt):
                     #print(torch.Tensor(bbox_xywh))
                     #print('confs')
                     #print(torch.Tensor(confs))
-                    outputs = deepsort.update((torch.Tensor(bbox_xywh)), (torch.Tensor(confs)) , im0)
+                    outputs = deepsort.update(
+                        (torch.Tensor(bbox_xywh)),
+                        (torch.Tensor(confs)),
+                        im0
+                    )
                     if len(outputs) > 0:
                         bbox_xyxy = outputs[:, :4]
                         identities = outputs[:, -1]
