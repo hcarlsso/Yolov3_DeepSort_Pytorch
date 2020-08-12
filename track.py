@@ -1,9 +1,18 @@
+import os
+import time
 import argparse
+import shutil
+import random
 from sys import platform
+from pathlib import Path
 
-from yolov3.models import attempt_download, ONNX_EXPORT, Darknet, torch, torch_utils, os, shutil, load_classes, random, time, Path, scale_coords, cv2  # set ONNX_EXPORT in models.py
+import cv2
+import torch
+
+from yolov3.utils.torch_utils import select_device
+from yolov3.models import attempt_download, ONNX_EXPORT, Darknet # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import LoadStreams, LoadImages
-from yolov3.utils.utils import non_max_suppression
+from yolov3.utils.utils import non_max_suppression, scale_coords, load_classes
 from deep_sort import DeepSort
 
 deepsort = DeepSort("deep_sort/deep/checkpoint/ckpt.t7")
@@ -52,7 +61,7 @@ def detect(opt):
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
 
     # Initialize
-    device = torch_utils.select_device(device='cpu' if ONNX_EXPORT else opt.device)
+    device = select_device(device='cpu' if ONNX_EXPORT else opt.device)
     if os.path.exists(out):
         shutil.rmtree(out)  # delete output folder
     os.makedirs(out)  # make new output folder
