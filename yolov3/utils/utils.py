@@ -517,7 +517,7 @@ def non_max_suppression(prediction, conf_thres=0.5, iou_thres=0.5, multi_cls=Tru
     nc = prediction[0].shape[1] - 5  # number of classes
     multi_cls = multi_cls and (nc > 1)  # allow multiple classes per anchor
     output = [None] * len(prediction)
-    for image_i, pred in enumerate(prediction):
+    for image_i, pred in enumerate(prediction): # Runs probably only one time
         # Apply conf constraint
         pred = pred[pred[:, 4] > conf_thres]
 

@@ -102,8 +102,8 @@ def detect(opt):
     # Run inference
     t0 = time.time()
     j = 0
-    # img: Resized image
-    # im0s: Original image
+    # img: Resized image, torch.Size([1, 3, 352, 608])
+    # im0s: Original image, ndarray, (720, 1280, 3) size
     for path, img, im0s, vid_cap in dataset:
         j += 1
         t = time.time()
@@ -114,11 +114,13 @@ def detect(opt):
             img = img.unsqueeze(0)
         pred = model(img)[0] # inference output [0], training output [1]
 
+        # Pred is tensor: torch.Size([1, 13167, 85])
         if opt.half:
             pred = pred.float()
 
         # Apply NMS. Probably preserves type of pred.
         # Looks like  it yields  the same amount of predictions.
+        import pdb; pdb.set_trace()
         pred = non_max_suppression(
             pred,
             opt.conf_thres,
@@ -126,6 +128,10 @@ def detect(opt):
             classes=opt.classes,
             agnostic=opt.agnostic_nms
         )
+
+        # Returns list of tensors size, 1x6
+        # (x1, y1, x2, y2, object_conf, conf, class)
+        # In img coordinates
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
@@ -138,6 +144,7 @@ def detect(opt):
             s += '%gx%g ' % img.shape[2:]  # print string
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
+                # scale_coords(img1_shape, coords, img0_shape, ratio_pad=None)
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
                 # print(det[:, :5])
                 # Print results

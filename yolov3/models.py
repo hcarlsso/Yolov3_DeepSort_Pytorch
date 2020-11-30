@@ -227,10 +227,9 @@ class Darknet(nn.Module):
         self.version = np.array([0, 2, 5], dtype=np.int32)  # (int32) version info: major, minor, revision
         self.seen = np.array([0], dtype=np.int64)  # (int64) number of images seen during training
 
-    def forward(self, x, var=None):
+    def forward(self, x, var=None, verbose = False):
         img_size = x.shape[-2:]
         output, layer_outputs = [], []
-        verbose = False
         if verbose:
             print('0', x.shape)
 
